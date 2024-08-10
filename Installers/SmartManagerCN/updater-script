@@ -1,0 +1,87 @@
+# Before: ui_print("  Hi! ");
+# Now:    ui_print " Hi! "
+#-----------Dynamic Installer Configs-----------#
+#The #MAGISK tag is required, dont remove it
+#MAGISK
+setdefault magisk_support off
+setdefault ensure_rw off
+setdefault import_addons off
+setdefault apex_mount off
+setdefault extraction_speed default
+setdefault permissions "0:0:0755:0644"
+setdefault devices off
+#-----------------------------------------------#
+#Your script starts here:
+#Coded by saadelasfur @telegram
+
+ui_print " "
+ui_print "------------------------------------------------"
+ui_print " -- Smart Manager for Samsung Galaxy devices -- "
+ui_print "------------------------------------------------"
+ui_print " ---------- by saadelasfur @telegram ---------- "
+ui_print "------------------------------------------------"
+
+ui_print " "
+#Mount partitions
+ui_print " -- Mounting partitions..."
+mount_all
+
+ui_print " -- Installing China Smart Manager..."
+
+#Delete old files
+delete_recursive /system/priv-app/SmartManager_v5
+delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
+
+#Extract new files
+package_extract_dir "packages" /system
+
+#Set folder permissions
+set_perm 0 0 0755 /system/priv-app/SAppLock
+set_perm 0 0 0755 /system/priv-app/Firewall
+set_perm 0 0 0755 /system/priv-app/SmartManager_v6_DeviceSecurity_CN
+set_perm 0 0 0755 /system/priv-app/SmartManagerCN
+ch_con "u:object_r:system_file:s0" /system/priv-app/SAppLock
+ch_con "u:object_r:system_file:s0" /system/priv-app/Firewall
+ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManager_v6_DeviceSecurity_CN
+ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManagerCN
+
+#Set apk permissions
+set_perm 0 0 0644 /system/priv-app/SAppLock/SAppLock.apk
+set_perm 0 0 0644 /system/priv-app/Firewall/Firewall.apk
+set_perm 0 0 0644 /system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk
+set_perm 0 0 0644 /system/priv-app/SmartManagerCN/SmartManagerCN.apk
+ch_con "u:object_r:system_file:s0" /system/priv-app/SAppLock/SAppLock.apk
+ch_con "u:object_r:system_file:s0" /system/priv-app/Firewall/Firewall.apk
+ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk
+ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManagerCN/SmartManagerCN.apk
+
+#Set xml permissions
+set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
+set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
+set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
+set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
+ch_con "u:object_r:system_file:s0" /system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
+ch_con "u:object_r:system_file:s0" /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
+ch_con "u:object_r:system_file:s0" /system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
+ch_con "u:object_r:system_file:s0" /system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
+
+#Set values in floating_feature
+replace "    <SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>com.samsung.android.lool</SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>" "    <SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>com.samsung.android.sm_cn</SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>" /system/etc/floating_feature.xml
+replace "    <SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME>com.samsung.android.sm.devicesecurity</SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME>" "    <SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME>com.samsung.android.sm.devicesecurity.tcm</SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME>" /system/etc/floating_feature.xml
+replace "</SecFloatingFeatureSet>" "    <SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION>TRUE</SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION>" /system/etc/floating_feature.xml
+add_lines_string "</SecFloatingFeatureSet>" /system/etc/floating_feature.xml
+
+#Unmount partitions         
+ui_print " -- Unmounting partitions..."
+umount_all
+
+ui_print " "
+ui_print "-------------------------------------------------"
+ui_print " -- Installation complete, wipe both caches!...  "
+ui_print "-------------------------------------------------"
+
+ui_print " "
+ui_print " -- Enjoy!!..."
+ui_print " "

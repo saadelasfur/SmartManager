@@ -1,0 +1,187 @@
+name: Check packages update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: "SM-S9110"
+            csc: "CHC"
+            dir: "SmartManagerCN"
+          - model: "SM-S911B"
+            csc: "EUX"
+            dir: "StockDeviceCare"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Compare latest version with current version
+        run: |
+          need_update=0
+          latest=`curl --retry 5 --retry-delay 5 http://fota-cloud-dn.ospserver.net/firmware/${{ matrix.csc }}/${{ matrix.model }}/version.xml | grep latest | sed 's/^[^>]*>//' | sed 's/<.*//'`
+          latest_short=`echo $latest | cut -d'/' -f1`
+          latest_csc=`echo $latest | cut -d'/' -f2`
+          latest_modem=`echo $latest | cut -d'/' -f3`
+          current=`cat ${{ matrix.dir }}/version` || need_update=1
+          [[ $latest_short != $current ]] && need_update=1
+          echo "latest_version=$latest" >> $GITHUB_ENV
+          echo "latest_shortversion=$latest_short" >> $GITHUB_ENV
+          echo "latest_cscversion=$latest_csc" >> $GITHUB_ENV
+          echo "latest_modemversion=$latest_modem" >> $GITHUB_ENV
+          echo "need_update=$need_update" >> $GITHUB_ENV
+
+      - name: Set up Node.js
+        if: env.need_update == 1
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: Set up Python 3
+        if: env.need_update == 1
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        if: env.need_update == 1
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang-15 clang++-15 llvm-15
+
+      - name: Build tools
+        if: env.need_update == 1
+        run: |
+          sudo apt-get update
+          # build erofs-utils from source
+          git clone https://github.com/sekaiacg/erofs-utils.git && cd erofs-utils
+          cmake -S "./build/cmake" -B "./out" \
+              -DCMAKE_SYSTEM_NAME="Linux" \
+              -DCMAKE_SYSTEM_PROCESSOR="x86_64" \
+              -DCMAKE_BUILD_TYPE="Release" \
+              -DRUN_ON_WSL="OFF" \
+              -DCMAKE_C_COMPILER_LAUNCHER="ccache" \
+              -DCMAKE_CXX_COMPILER_LAUNCHER="ccache" \
+              -DCMAKE_C_COMPILER="clang" \
+              -DCMAKE_CXX_COMPILER="clang++" \
+              -DCMAKE_C_FLAGS="" \
+              -DCMAKE_CXX_FLAGS="" \
+              -DENABLE_FULL_LTO="ON" \
+              -DMAX_BLOCK_SIZE="4096"
+          make -C "./out" -j$(nproc) --quiet
+          sudo cp --preserve=all "out/erofs-tools/fuse.erofs" "/usr/bin/fuse.erofs" && sudo chmod +x /usr/bin/fuse.erofs
+          cd .. && rm -rf erofs-utils
+          # build samfirm from source
+          git clone https://github.com/DavidArsene/samfirm.js.git && cd samfirm.js
+          npm install --silent
+          npm run --silent build
+          sudo cp --preserve=all "dist/index.js" "/usr/bin/samfirm" && sudo chmod +x /usr/bin/samfirm
+          cd .. && rm -rf samfirm.js
+
+      - name: Fetch firmware
+        if: env.need_update == 1
+        run: |
+          if [[ "${{ matrix.model }}" == "SM-S9110" ]]; then
+              imei="350448737216793"
+          else
+              imei="352404911234563"
+          fi
+          samfirm -m ${{ matrix.model }} -r ${{ matrix.csc }} -i $imei
+
+      - name: Get path of files
+        if: env.need_update == 1
+        run: |
+          echo "ap_tar=`find -name AP*`" >> $GITHUB_ENV
+          echo "bl_tar=`find -name BL*`" >> $GITHUB_ENV
+          echo "cp_tar=`find -name CP*`" >> $GITHUB_ENV
+          echo "csc_tar=`find -name CSC*`" >> $GITHUB_ENV
+          echo "home_csc_tar=`find -name HOME_CSC*`" >> $GITHUB_ENV
+
+      - name: Check downloaded firmware version
+        if: env.need_update == 1
+        run: |
+          version_short=`echo ${{ env.ap_tar }} | cut -d'_' -f3`
+          version_csc=`echo ${{ env.csc_tar }} | cut -d'_' -f4`
+          version_modem=`echo ${{ env.cp_tar }} | cut -d'_' -f3`
+          [[ $version_short == ${{ env.latest_shortversion }} ]]
+          [[ $version_csc == ${{ env.latest_cscversion }} ]]
+          [[ $version_modem == ${{ env.latest_modemversion }} ]]
+          echo PDA version: $version_short > versions.txt
+          echo CSC version: $version_csc >> versions.txt
+          echo Modem version: $version_modem >> versions.txt
+
+      - name: Cleanup space
+        if: env.need_update == 1
+        run: |
+          sudo apt-get remove --purge -y "php*" "dotnet*" "mysql*" "nodejs*" "clang*" "google*"
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf /usr/local
+          rm ${{ env.bl_tar }} && rm ${{ env.cp_tar }} && rm ${{ env.csc_tar }} && rm ${{ env.home_csc_tar }}
+
+      - name: Update packages
+        if: env.need_update == 1
+        run: |
+          tar xvf ${{ env.ap_tar }} super.img.lz4
+          rm ${{ env.ap_tar }}
+          lz4 -d super.img.lz4 super.img
+          rm super.img.lz4
+          simg2img super.img super_raw.img
+          rm super.img
+          mv super_raw.img super.img
+          python3 .github/tools/bin/lpunpack.py -p system super.img .
+          rm super.img
+          mkdir system
+          fuse.erofs system.img system
+          case "${{ matrix.dir }}" in
+              "SmartManagerCN")
+                  cp -f -a --preserve=all system/system/priv-app/AppLock/AppLock.apk SmartManagerCN/packages/priv-app/SAppLock/SAppLock.apk
+                  cp -f -a --preserve=all system/system/priv-app/Firewall/Firewall.apk SmartManagerCN/packages/priv-app/Firewall/Firewall.apk
+                  cp -f -a --preserve=all system/system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk SmartManagerCN/packages/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk
+                  cp -f -a --preserve=all system/system/priv-app/SmartManagerCN/SmartManagerCN.apk SmartManagerCN/packages/priv-app/SmartManagerCN/SmartManagerCN.apk
+                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
+                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
+                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
+                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
+                  ;;
+              "StockDeviceCare")
+                  cp -f -a --preserve=all system/system/priv-app/SmartManager_v5/SmartManager_v5.apk StockDeviceCare/packages/priv-app/SmartManager_v5/SmartManager_v5.apk
+                  cp -f -a --preserve=all system/system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk StockDeviceCare/packages/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk
+                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml StockDeviceCare/packages/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
+                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml StockDeviceCare/packages/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
+                  ;;
+          esac
+          rm system.img && fusermount -u system && rm -rf system
+
+      - name: Update current version
+        if: env.need_update == 1
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git pull origin ${{ github.ref }} --ff-only
+          echo ${{ env.latest_shortversion }} > ${{ matrix.dir }}/version
+
+      - name: Create Pull Request
+        if: env.need_update == 1
+        uses: peter-evans/create-pull-request@v6
+        with:
+          add-paths: |
+            ${{ matrix.dir }}/*
+          commit-message: '${{ matrix.dir }}: update packages to ${{ env.latest_shortversion }}'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          branch: '${{ env.latest_shortversion }}'
+          delete-branch: true
+          title: '${{ matrix.dir }}: update packages to ${{ env.latest_shortversion }}'
+          body-path: 'versions.txt'

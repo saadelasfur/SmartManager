@@ -36,4 +36,7 @@ Simply download the StockDeviceCare installer from the releases page and flash i
 </p>
 
 ## Credits
+- [@salvogiangri](https://github.com/salvogiangri) for his assistance and the base [action](https://github.com/Mesa-Labs-Archive/proprietary_vendor_samsung_a54x/blob/main/.github/workflows/check.yml) script.
 - [BlassGO](https://xdaforums.com/m/blassgo.11402469/) for the awesome [Dynamic Installer](https://xdaforums.com/t/zip-dual-installer-dynamic-installer-stable-5-1-android-10-or-earlier.4279541/).
+- [@jesec](https://github.com/jesec) and [@corsicanu](https://github.com/corsicanu) for the original GitHub Actions script.
+- [@unix3dgforce](https://github.com/unix3dgforce) for his [lpunpack.py](https://github.com/unix3dgforce/lpunpack) script.

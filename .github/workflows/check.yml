@@ -171,17 +171,11 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git pull origin ${{ github.ref }} --ff-only
           echo ${{ env.latest_shortversion }} > ${{ matrix.dir }}/version
+          git add ${{ matrix.dir }}/*
+          git commit -m "${{ matrix.dir }}: update packages to ${{ env.latest_shortversion }}"
 
-      - name: Create Pull Request
+      - name: Push changes to repo
         if: env.need_update == 1
-        uses: peter-evans/create-pull-request@v6
+        uses: ad-m/github-push-action@master
         with:
-          add-paths: |
-            ${{ matrix.dir }}/*
-          commit-message: '${{ matrix.dir }}: update packages to ${{ env.latest_shortversion }}'
-          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
-          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
-          branch: '${{ env.latest_shortversion }}'
-          delete-branch: true
-          title: '${{ matrix.dir }}: update packages to ${{ env.latest_shortversion }}'
-          body-path: 'versions.txt'
+          github_token: ${{ secrets.TOKEN }}

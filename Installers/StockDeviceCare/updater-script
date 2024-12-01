@@ -40,20 +40,20 @@ package_extract_dir "packages" /system
 # Set folder permissions
 set_perm 0 0 0755 /system/priv-app/SmartManager_v5
 set_perm 0 0 0755 /system/priv-app/SmartManager_v6_DeviceSecurity
-ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManager_v5
-ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManager_v6_DeviceSecurity
+set_metadata /system/priv-app/SmartManager_v5 capabilities 0x0 selabel u:object_r:system_file:s0
+set_metadata /system/priv-app/SmartManager_v6_DeviceSecurity capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set apk permissions
 set_perm 0 0 0644 /system/priv-app/SmartManager_v5/SmartManager_v5.apk
 set_perm 0 0 0644 /system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk
-ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManager_v5/SmartManager_v5.apk
-ch_con "u:object_r:system_file:s0" /system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk
+set_metadata /system/priv-app/SmartManager_v5/SmartManager_v5.apk capabilities 0x0 selabel u:object_r:system_file:s0
+set_metadata /system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set xml permissions
 set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
 set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
-ch_con "u:object_r:system_file:s0" /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
-ch_con "u:object_r:system_file:s0" /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
+set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml capabilities 0x0 selabel u:object_r:system_file:s0
+set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set values in floating_feature
 replace "    <SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>com.samsung.android.sm_cn</SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>" "    <SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>com.samsung.android.lool</SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>" /system/etc/floating_feature.xml

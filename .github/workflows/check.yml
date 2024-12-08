@@ -8,7 +8,7 @@ on:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
@@ -57,8 +57,11 @@ jobs:
       - name: Install dependencies
         if: env.need_update == 1
         run: |
-          sudo apt-get update
-          sudo apt-get install -y liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang-15 clang++-15 llvm-15
+          sudo apt update && sudo apt upgrade -y
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
+            linux-modules-extra-$(uname -r) \
+            liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang-15 clang++-15 llvm-15
+          sudo modprobe f2fs
 
       - name: Build tools
         if: env.need_update == 1
@@ -128,7 +131,9 @@ jobs:
           sudo apt-get autoremove -y
           sudo apt-get clean
           sudo rm -rf /usr/local
-          rm ${{ env.bl_tar }} && rm ${{ env.cp_tar }} && rm ${{ env.csc_tar }} && rm ${{ env.home_csc_tar }}
+          for f in "${{ env.bl_tar }}" "${{ env.cp_tar }}" "${{ env.csc_tar }}" "${{ env.home_csc_tar }}"; do
+              rm "$f"
+          done
 
       - name: Update packages
         if: env.need_update == 1
@@ -162,7 +167,9 @@ jobs:
                   cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml StockDeviceCare/packages/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
                   ;;
           esac
-          rm system.img && fusermount -u system && rm -rf system
+          sudo umount system \
+              && rm system.img \
+              && rm -rf system
 
       - name: Update current version
         if: env.need_update == 1

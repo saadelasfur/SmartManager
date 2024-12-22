@@ -32,14 +32,10 @@ jobs:
           need_update=0
           latest=`curl --retry 5 --retry-delay 5 http://fota-cloud-dn.ospserver.net/firmware/${{ matrix.csc }}/${{ matrix.model }}/version.xml | grep latest | sed 's/^[^>]*>//' | sed 's/<.*//'`
           latest_short=`echo $latest | cut -d'/' -f1`
-          latest_csc=`echo $latest | cut -d'/' -f2`
-          latest_modem=`echo $latest | cut -d'/' -f3`
           current=`cat ${{ matrix.dir }}/version` || need_update=1
           [[ $latest_short != $current ]] && need_update=1
           echo "latest_version=$latest" >> $GITHUB_ENV
           echo "latest_shortversion=$latest_short" >> $GITHUB_ENV
-          echo "latest_cscversion=$latest_csc" >> $GITHUB_ENV
-          echo "latest_modemversion=$latest_modem" >> $GITHUB_ENV
           echo "need_update=$need_update" >> $GITHUB_ENV
 
       - name: Set up Node.js
@@ -60,7 +56,7 @@ jobs:
           sudo apt update && sudo apt upgrade -y
           DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
             linux-modules-extra-$(uname -r) \
-            liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang-15 clang++-15 llvm-15
+            liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang llvm
           sudo modprobe f2fs
 
       - name: Build tools
@@ -110,19 +106,6 @@ jobs:
           echo "cp_tar=`find -name CP*`" >> $GITHUB_ENV
           echo "csc_tar=`find -name CSC*`" >> $GITHUB_ENV
           echo "home_csc_tar=`find -name HOME_CSC*`" >> $GITHUB_ENV
-
-      - name: Check downloaded firmware version
-        if: env.need_update == 1
-        run: |
-          version_short=`echo ${{ env.ap_tar }} | cut -d'_' -f3`
-          version_csc=`echo ${{ env.csc_tar }} | cut -d'_' -f4`
-          version_modem=`echo ${{ env.cp_tar }} | cut -d'_' -f3`
-          [[ $version_short == ${{ env.latest_shortversion }} ]]
-          [[ $version_csc == ${{ env.latest_cscversion }} ]]
-          [[ $version_modem == ${{ env.latest_modemversion }} ]]
-          echo PDA version: $version_short > versions.txt
-          echo CSC version: $version_csc >> versions.txt
-          echo Modem version: $version_modem >> versions.txt
 
       - name: Cleanup space
         if: env.need_update == 1

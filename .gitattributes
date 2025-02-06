@@ -3,6 +3,7 @@
 * text=auto eol=lf
 
 Installers/Installer.zip binary
+.github/tools/bin/lpunpack binary
 *.apk binary
 *.xml binary
 *.jpg binary

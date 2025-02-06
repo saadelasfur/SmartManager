@@ -87,6 +87,8 @@ jobs:
           npm run --silent build
           sudo cp --preserve=all "dist/index.js" "/usr/bin/samfirm" && sudo chmod +x /usr/bin/samfirm
           cd .. && rm -rf samfirm.js
+          # lpunpack
+          sudo cp --preserve=all ".github/tools/bin/lpunpack" "/usr/bin/lpunpack" && sudo chmod +x /usr/bin/lpunpack
 
       - name: Fetch firmware
         if: env.need_update == 1
@@ -128,7 +130,7 @@ jobs:
           simg2img super.img super_raw.img
           rm super.img
           mv super_raw.img super.img
-          python3 .github/tools/bin/lpunpack.py -p system super.img .
+          lpunpack -p system super.img .
           rm super.img
           mkdir system
           fuse.erofs system.img system

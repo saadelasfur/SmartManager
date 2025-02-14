@@ -24,36 +24,44 @@ mount_all
 
 ui_print " -- Restoring Stock Device Care..."
 
-# Delete old files
-delete_recursive /system/priv-app/SmartManagerCN
-delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity_CN
-delete_recursive /system/priv-app/SAppLock
-delete_recursive /system/priv-app/Firewall
+# Cleanup all
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
+delete /system/etc/permissions/signature-permissions-com.samsung.android.lool.xml
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
 delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
+delete /system/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml
 delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
 delete /system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
 delete /system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
+delete_recursive /system/priv-app/SmartManager_v5
+delete_recursive /system/app/SmartManager_v6_DeviceSecurity
+delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity
+delete_recursive /system/priv-app/SmartManagerCN
+delete_recursive /system/app/SmartManager_v6_DeviceSecurity_CN
+delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity_CN
+delete_recursive /system/priv-app/SAppLock
+delete_recursive /system/priv-app/Firewall
 
 # Extract new files
 package_extract_dir "packages" /system
 
 # Set folder permissions
+set_perm 0 0 0755 /system/app/SmartManager_v6_DeviceSecurity
 set_perm 0 0 0755 /system/priv-app/SmartManager_v5
-set_perm 0 0 0755 /system/priv-app/SmartManager_v6_DeviceSecurity
+set_metadata /system/app/SmartManager_v6_DeviceSecurity capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/SmartManager_v5 capabilities 0x0 selabel u:object_r:system_file:s0
-set_metadata /system/priv-app/SmartManager_v6_DeviceSecurity capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set apk permissions
+set_perm 0 0 0644 /system/app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk
 set_perm 0 0 0644 /system/priv-app/SmartManager_v5/SmartManager_v5.apk
-set_perm 0 0 0644 /system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk
+set_metadata /system/app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/SmartManager_v5/SmartManager_v5.apk capabilities 0x0 selabel u:object_r:system_file:s0
-set_metadata /system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set xml permissions
 set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
-set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
+set_perm 0 0 0644 /system/etc/permissions/signature-permissions-com.samsung.android.lool.xml
 set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml capabilities 0x0 selabel u:object_r:system_file:s0
-set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml capabilities 0x0 selabel u:object_r:system_file:s0
+set_metadata /system/etc/permissions/signature-permissions-com.samsung.android.lool.xml capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set values in floating_feature
 replace "    <SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>com.samsung.android.sm_cn</SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>" "    <SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>com.samsung.android.lool</SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME>" /system/etc/floating_feature.xml

@@ -25,22 +25,22 @@ VERIFY_7Z()
 
 MAKE_ZIP()
 {
-    local SOURCE_DIR=$1
-    local SRC=$(pwd)
-    local OUT_DIR=$SRC/out
-    local OUTPUT_ZIP="$SOURCE_DIR-$(date +%Y%m%d).zip"
+    local DIR="$1"
+    local SRC="$(pwd)"
+    local OUT_DIR="$SRC/out"
+    local OUTPUT_ZIP="$DIR-$(date +%Y%m%d).zip"
     local INSTALLER_ZIP="$SRC/Installers/Installer.zip"
 
-    mkdir -p "$OUT_DIR/$SOURCE_DIR"
-    cp -a --preserve=all "$SRC/$SOURCE_DIR/." "$OUT_DIR/$SOURCE_DIR/"
-    7z x "$INSTALLER_ZIP" -o"$OUT_DIR/$SOURCE_DIR/"
-    cat "$SRC/Installers/$SOURCE_DIR/updater-script" > "$OUT_DIR/$SOURCE_DIR/META-INF/com/google/android/updater-script"
-    cd "$OUT_DIR/$SOURCE_DIR"
-    find . -exec touch -a -c -m -t 200812311700.00 {} +
+    mkdir -p "$OUT_DIR/$DIR"
+    cp -a --preserve=all "$SRC/$DIR/." "$OUT_DIR/$DIR/"
+    7z x "$INSTALLER_ZIP" -o"$OUT_DIR/$DIR/"
+    cat "$SRC/Installers/$DIR/updater-script" > "$OUT_DIR/$DIR/META-INF/com/google/android/updater-script"
+    cd "$OUT_DIR/$DIR"
+    find . -exec touch -a -c -m -t 200901010000.00 {} \;
     7z a -tzip -mx=5 "$OUTPUT_ZIP" -x!"version" .
     mv -f "$OUTPUT_ZIP" "$OUT_DIR/$OUTPUT_ZIP"
     echo "$OUTPUT_ZIP has been moved to out dir"
-    cd $SRC
+    cd "$SRC"
 }
 
 [[ -d "out" ]] && rm -rf out

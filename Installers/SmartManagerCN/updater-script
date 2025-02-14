@@ -30,42 +30,54 @@ mount_all
 
 ui_print " -- Installing China Smart Manager..."
 
-# Delete old files
-delete_recursive /system/priv-app/SmartManager_v5
-delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity
+# Cleanup all
 delete /system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
+delete /system/etc/permissions/signature-permissions-com.samsung.android.lool.xml
 delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
+delete /system/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
+delete /system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
+delete /system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
+delete_recursive /system/priv-app/SmartManager_v5
+delete_recursive /system/app/SmartManager_v6_DeviceSecurity
+delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity
+delete_recursive /system/priv-app/SmartManagerCN
+delete_recursive /system/app/SmartManager_v6_DeviceSecurity_CN
+delete_recursive /system/priv-app/SmartManager_v6_DeviceSecurity_CN
+delete_recursive /system/priv-app/SAppLock
+delete_recursive /system/priv-app/Firewall
 
 # Extract new files
 package_extract_dir "packages" /system
 
 # Set folder permissions
+set_perm 0 0 0755 /system/app/SmartManager_v6_DeviceSecurity_CN
 set_perm 0 0 0755 /system/priv-app/SAppLock
 set_perm 0 0 0755 /system/priv-app/Firewall
-set_perm 0 0 0755 /system/priv-app/SmartManager_v6_DeviceSecurity_CN
 set_perm 0 0 0755 /system/priv-app/SmartManagerCN
+set_metadata /system/app/SmartManager_v6_DeviceSecurity_CN capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/SAppLock capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/Firewall capabilities 0x0 selabel u:object_r:system_file:s0
-set_metadata /system/priv-app/SmartManager_v6_DeviceSecurity_CN capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/SmartManagerCN capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set apk permissions
+set_perm 0 0 0644 /system/app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk
 set_perm 0 0 0644 /system/priv-app/SAppLock/SAppLock.apk
 set_perm 0 0 0644 /system/priv-app/Firewall/Firewall.apk
-set_perm 0 0 0644 /system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk
 set_perm 0 0 0644 /system/priv-app/SmartManagerCN/SmartManagerCN.apk
+set_metadata /system/app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/SAppLock/SAppLock.apk capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/Firewall/Firewall.apk capabilities 0x0 selabel u:object_r:system_file:s0
-set_metadata /system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/priv-app/SmartManagerCN/SmartManagerCN.apk capabilities 0x0 selabel u:object_r:system_file:s0
 
 # Set xml permissions
 set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
-set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
+set_perm 0 0 0644 /system/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml
 set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
 set_perm 0 0 0644 /system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
 set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml capabilities 0x0 selabel u:object_r:system_file:s0
-set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml capabilities 0x0 selabel u:object_r:system_file:s0
+set_metadata /system/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml capabilities 0x0 selabel u:object_r:system_file:s0
 set_metadata /system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml capabilities 0x0 selabel u:object_r:system_file:s0
 

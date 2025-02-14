@@ -14,10 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - model: "SM-S9110"
+          - model: "SM-S9310"
             csc: "CHC"
             dir: "SmartManagerCN"
-          - model: "SM-S911B"
+          - model: "SM-S931B"
             csc: "EUX"
             dir: "StockDeviceCare"
 
@@ -30,12 +30,10 @@ jobs:
       - name: Compare latest version with current version
         run: |
           need_update=0
-          latest=`curl --retry 5 --retry-delay 5 http://fota-cloud-dn.ospserver.net/firmware/${{ matrix.csc }}/${{ matrix.model }}/version.xml | grep latest | sed 's/^[^>]*>//' | sed 's/<.*//'`
-          latest_short=`echo $latest | cut -d'/' -f1`
+          latest=`curl --retry 5 --retry-delay 5 http://fota-cloud-dn.ospserver.net/firmware/${{ matrix.csc }}/${{ matrix.model }}/version.xml | grep latest | sed 's/^[^>]*>//' | sed 's/<.*//' | cut -d'/' -f1`
           current=`cat ${{ matrix.dir }}/version` || need_update=1
-          [[ $latest_short != $current ]] && need_update=1
+          [[ $latest != $current ]] && need_update=1
           echo "latest_version=$latest" >> $GITHUB_ENV
-          echo "latest_shortversion=$latest_short" >> $GITHUB_ENV
           echo "need_update=$need_update" >> $GITHUB_ENV
 
       - name: Set up Node.js
@@ -54,15 +52,11 @@ jobs:
         if: env.need_update == 1
         run: |
           sudo apt update && sudo apt upgrade -y
-          DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
-            linux-modules-extra-$(uname -r) \
-            liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang llvm
-          sudo modprobe f2fs
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq linux-modules-extra-$(uname -r) liblz4-tool android-sdk-libsparse-utils f2fs-tools ccache clang llvm
 
       - name: Build tools
         if: env.need_update == 1
         run: |
-          sudo apt-get update
           # build erofs-utils from source
           git clone https://github.com/sekaiacg/erofs-utils.git && cd erofs-utils
           cmake -S "./build/cmake" -B "./out" \
@@ -93,10 +87,10 @@ jobs:
       - name: Fetch firmware
         if: env.need_update == 1
         run: |
-          if [[ "${{ matrix.model }}" == "SM-S9110" ]]; then
-              imei="350448737216793"
+          if [[ "${{ matrix.model }}" == "SM-S9310" ]]; then
+              imei="350008610416934"
           else
-              imei="352404911234563"
+              imei="350505560005823"
           fi
           samfirm -m ${{ matrix.model }} -r ${{ matrix.csc }} -i $imei
 
@@ -112,7 +106,7 @@ jobs:
       - name: Cleanup space
         if: env.need_update == 1
         run: |
-          sudo apt-get remove --purge -y "php*" "dotnet*" "mysql*" "nodejs*" "clang*" "google*"
+          sudo apt-get remove --purge -y "php*" "dotnet*" "mysql*" "nodejs*" "clang*" "google*" "ccache*" "llvm*"
           sudo apt-get autoremove -y
           sudo apt-get clean
           sudo rm -rf /usr/local
@@ -130,26 +124,31 @@ jobs:
           simg2img super.img super_raw.img
           rm super.img
           mv super_raw.img super.img
-          lpunpack -p system super.img .
+          lpunpack -p system_a super.img .
+          mv system_a.img system.img
           rm super.img
           mkdir system
           fuse.erofs system.img system
           case "${{ matrix.dir }}" in
               "SmartManagerCN")
-                  cp -f -a --preserve=all system/system/priv-app/AppLock/AppLock.apk SmartManagerCN/packages/priv-app/SAppLock/SAppLock.apk
-                  cp -f -a --preserve=all system/system/priv-app/Firewall/Firewall.apk SmartManagerCN/packages/priv-app/Firewall/Firewall.apk
-                  cp -f -a --preserve=all system/system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk SmartManagerCN/packages/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk
-                  cp -f -a --preserve=all system/system/priv-app/SmartManagerCN/SmartManagerCN.apk SmartManagerCN/packages/priv-app/SmartManagerCN/SmartManagerCN.apk
-                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml
-                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml
-                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.applock.xml
-                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml SmartManagerCN/packages/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml
+                  # APKs
+                  cp -f -a --preserve=all "system/system/app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk" "SmartManagerCN/packages/app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk"
+                  cp -f -a --preserve=all "system/system/priv-app/AppLock/AppLock.apk" "SmartManagerCN/packages/priv-app/SAppLock/SAppLock.apk"
+                  cp -f -a --preserve=all "system/system/priv-app/Firewall/Firewall.apk" "SmartManagerCN/packages/priv-app/Firewall/Firewall.apk"
+                  cp -f -a --preserve=all "system/system/priv-app/SmartManagerCN/SmartManagerCN.apk" "SmartManagerCN/packages/priv-app/SmartManagerCN/SmartManagerCN.apk"
+                  # Permissions
+                  cp -f -a --preserve=all "system/system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml"
+                  cp -f -a --preserve=all "system/system/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "SmartManagerCN/packages/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml"
+                  cp -f -a --preserve=all "system/system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "SmartManagerCN/packages/etc/permissions/privapp-permissions-com.samsung.android.applock.xml"
+                  cp -f -a --preserve=all "system/system/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "SmartManagerCN/packages/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml"
                   ;;
               "StockDeviceCare")
-                  cp -f -a --preserve=all system/system/priv-app/SmartManager_v5/SmartManager_v5.apk StockDeviceCare/packages/priv-app/SmartManager_v5/SmartManager_v5.apk
-                  cp -f -a --preserve=all system/system/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk StockDeviceCare/packages/priv-app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk
-                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml StockDeviceCare/packages/etc/permissions/privapp-permissions-com.samsung.android.lool.xml
-                  cp -f -a --preserve=all system/system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml StockDeviceCare/packages/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml
+                  # APKs
+                  cp -f -a --preserve=all "system/system/app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk" "StockDeviceCare/packages/app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk"
+                  cp -f -a --preserve=all "system/system/priv-app/SmartManager_v5/SmartManager_v5.apk" "StockDeviceCare/packages/priv-app/SmartManager_v5/SmartManager_v5.apk"
+                  # Permissions
+                  cp -f -a --preserve=all "system/system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "StockDeviceCare/packages/etc/permissions/privapp-permissions-com.samsung.android.lool.xml"
+                  cp -f -a --preserve=all "system/system/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "StockDeviceCare/packages/etc/permissions/signature-permissions-com.samsung.android.lool.xml"
                   ;;
           esac
           sudo umount system \
@@ -162,9 +161,9 @@ jobs:
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git pull origin ${{ github.ref }} --ff-only
-          echo ${{ env.latest_shortversion }} > ${{ matrix.dir }}/version
+          echo ${{ env.latest_version }} > ${{ matrix.dir }}/version
           git add ${{ matrix.dir }}/*
-          git commit -m "${{ matrix.dir }}: update packages to ${{ env.latest_shortversion }}"
+          git commit -m "${{ matrix.dir }}: update packages to ${{ env.latest_version }}"
 
       - name: Push changes to repo
         if: env.need_update == 1

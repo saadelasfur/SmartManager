@@ -1,0 +1,7 @@
+id=smart_manager
+name=SmartManagerCN
+version=v0.5
+versionCode=5
+author=saadelasfur
+description= China Smart Manager for the International Samsung Galaxy devices.
+updateJson=https://raw.githubusercontent.com/saadelasfur/SmartManager/refs/heads/master/Installers/module/SmartManagerCN/update.json

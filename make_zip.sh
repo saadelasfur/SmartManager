@@ -34,9 +34,21 @@ MAKE_ZIP()
     mkdir -p "$OUT_DIR/$DIR"
     cp -a --preserve=all "$SRC/$DIR/." "$OUT_DIR/$DIR/"
     7z x "$INSTALLER_ZIP" -o"$OUT_DIR/$DIR/"
-    cat "$SRC/Installers/$DIR/updater-script" > "$OUT_DIR/$DIR/META-INF/com/google/android/updater-script"
+    mkdir -p "$OUT_DIR/$DIR/META-INF/com/google/android/magisk"
+    # updater-script
+    cat "$SRC/Installers/updater/$DIR/updater-script" \
+        > "$OUT_DIR/$DIR/META-INF/com/google/android/updater-script"
+    # customize.sh
+    cat "$SRC/Installers/module/customize.sh" \
+        > "$OUT_DIR/$DIR/customize.sh"
+    cat "$SRC/Installers/module/$DIR/customize.sh" \
+        > "$OUT_DIR/$DIR/META-INF/com/google/android/magisk/customize.sh"
+    # module.prop
+    tee "$OUT_DIR/$DIR/module.prop" \
+        "$OUT_DIR/$DIR/META-INF/com/google/android/magisk/module.prop" \
+        < "$SRC/Installers/module/$DIR/module.prop"
     cd "$OUT_DIR/$DIR"
-    find . -exec touch -a -c -m -t 200901010000.00 {} \;
+    find . -exec env TZ=UTC touch -a -c -m -t 200901010000.00 {} \;
     7z a -tzip -mx=5 "$OUTPUT_ZIP" -x!"version" .
     mv -f "$OUTPUT_ZIP" "$OUT_DIR/$OUTPUT_ZIP"
     echo "$OUTPUT_ZIP has been moved to out dir"
@@ -52,11 +64,11 @@ VERIFY_7Z
 
 echo ""
 echo "Making SmartManagerCN zip..."
-MAKE_ZIP "SmartManagerCN"
+MAKE_ZIP "SmartManagerCN" &> /dev/null
 
 echo ""
 echo "Making StockDeviceCare zip..."
-MAKE_ZIP "StockDeviceCare"
+MAKE_ZIP "StockDeviceCare" &> /dev/null
 
 echo ""
 echo "Build finished, exiting..."

@@ -3,7 +3,7 @@
 #-----------Dynamic Installer Configs-----------#
 #The #MAGISK tag is required, dont remove it
 #MAGISK
-setdefault   magisk_support       on
+setdefault   magisk_support       off
 setdefault   ensure_rw            off
 setdefault   import_addons        off
 setdefault   apex_mount           off

@@ -51,6 +51,21 @@ delete_recursive "/system/priv-app/SmartManager_v6_DeviceSecurity_CN"
 delete_recursive "/system/priv-app/SAppLock"
 delete_recursive "/system/priv-app/Firewall"
 
+# Check for free space
+try_mount -rw /cache
+TMP_DIR="/cache/manager"
+mkdir -p "$TMP_DIR"
+package_extract_dir "packages" "$TMP_DIR"
+
+freespace="$(expr $(df | grep "system" | awk '{ print $2 }') - $(df | grep "system" | awk '{ print $3 }'))"
+neededspace="$(du -s "$TMP_DIR" | awk '{ print $1 }')"
+if [[ "$freespace" -lt "$neededspace" ]]; then
+    delete_recursive "$TMP_DIR"
+    abort "ERROR: Not enough space in /system. Aborting..."
+fi
+
+delete_recursive "$TMP_DIR"
+
 # Extract new files
 package_extract_dir "packages" /system
 

@@ -27,6 +27,9 @@ ui_print " "
 # Mount partitions
 ui_print " -- Mounting partitions..."
 mount_all
+if [[ -n "$(mount | grep "system" | grep "erofs")" ]] || [[ -n "$(mount | grep "system" | grep "f2fs")" ]]; then
+    abort "ERROR: Read-only filesystem detected. Aborting..."
+fi
 
 ui_print " -- Installing China Smart Manager..."
 

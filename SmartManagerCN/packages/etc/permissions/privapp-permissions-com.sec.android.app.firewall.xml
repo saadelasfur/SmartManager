@@ -8,5 +8,6 @@
         <permission name="android.permission.INTERACT_ACROSS_USERS"/>
         <permission name="com.android.voicemail.permission.WRITE_VOICEMAIL"/>
         <permission name="android.permission.SCHEDULE_EXACT_ALARM"/>
+        <permission name="android.permission.READ_SEARCH_INDEXABLES"/>
     </privapp-permissions>
 </permissions>

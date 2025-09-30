@@ -55,8 +55,9 @@ TMP_DIR="/cache/manager"
 mkdir -p "$TMP_DIR"
 package_extract_dir "packages" "$TMP_DIR"
 
-freespace="$(expr $(df | grep "system" | awk '{ print $2 }') - $(df | grep "system" | awk '{ print $3 }'))"
-neededspace="$(du -s "$TMP_DIR" | awk '{ print $1 }')"
+freespace="$(df | grep "system" | tail -1 | awk '{print $4}')"
+neededspace="$(du -s "$TMP_DIR" | awk '{print $1}')"
+
 if [[ "$freespace" -lt "$neededspace" ]]; then
     delete_recursive "$TMP_DIR"
     abort "ERROR: Not enough space in /system. Aborting..."
